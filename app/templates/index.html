@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Expense Tracker</title>
+</head>
+<body>
+  <h1>Daily Expense</h1>
+  <form action="/add" method="post">
+    Amount: <input type="number" name="amount" step="0.01" required><br>
+    Category: <input type="text" name="category" required><br>
+    <button type="submit">Add</button>
+  </form>
+  <h2>History</h2>
+  <ul>
+    {% for expense in expenses %}
+      <li>{{ expense.timestamp }} - {{ expense.category }}: ¥{{ expense.amount }}</li>
+    {% endfor %}
+  </ul>
+</body>
+</html>
+
