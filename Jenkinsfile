@@ -2,43 +2,49 @@ pipeline {
     agent any
 
     // 1. 参数化构建，输入分支名
-    parameters {
-        string(name: 'BRANCH_NAME', defaultValue: 'master', description: '请输入要构建的分支名')
-    }
+parameters {
+    string(name: 'BRANCH', defaultValue: 'master', description: '请输入构建分支')
+}
 
-    environment {
-        PROJECT_NAME = 'fastapi-expense-tracker'
-        REPO_URL = 'https://github.com/DaDaGuang/learning.git'  // ← 修改为你的真实仓库地址
-    }
+pipeline {
+    agent any
 
     stages {
         stage('Clone Repository') {
             steps {
-                echo "拉取分支: ${params.BRANCH_NAME}"
-                git branch: "${params.BRANCH_NAME}", url: "${env.REPO_URL}"
+                echo "拉取分支: ${params.BRANCH}"
+                git branch: "${params.BRANCH}",
+                     credentialsId: 'jenkins-github-ssh',
+                     url: 'git@github.com:DaDaGuang/learning.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo "构建 Docker 镜像: ${env.PROJECT_NAME}:${params.BRANCH_NAME}"
-                sh """
-                docker build -t ${env.PROJECT_NAME}:${params.BRANCH_NAME} .
-                """
+                echo "构建 Docker 镜像: fastapi-expense-tracker:${params.BRANCH}"
+                sh "docker build -t fastapi-expense-tracker:${params.BRANCH} ."
             }
         }
 
         stage('Run Docker Container') {
             steps {
-                echo "运行 Docker 容器: ${env.PROJECT_NAME}"
+                echo "运行 Docker 容器: fastapi-expense-tracker:${params.BRANCH}"
                 sh """
-                docker stop ${env.PROJECT_NAME} || true
-                docker rm ${env.PROJECT_NAME} || true
-                docker run -d --name ${env.PROJECT_NAME} -p 8000:8000 ${env.PROJECT_NAME}:${params.BRANCH_NAME}
+                    docker stop fastapi-expense-tracker || true
+                    docker rm fastapi-expense-tracker || true
+                    docker run -d --name fastapi-expense-tracker -p 8000:8000 fastapi-expense-tracker:${params.BRANCH}
                 """
             }
         }
     }
+
+    post {
+        failure {
+            echo "⚠️ 构建失败，请检查日志！"
+        }
+    }
+}
+
 
     post {
         failure {
