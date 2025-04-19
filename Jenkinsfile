@@ -1,38 +1,38 @@
 pipeline {
     agent any
 
-    // 1. 参数化构建，输入分支名
-parameters {
-    string(name: 'BRANCH', defaultValue: 'master', description: '请输入构建分支')
-}
+    parameters {
+        string(name: 'BRANCH', defaultValue: 'master', description: '要构建的 Git 分支')
+    }
 
-pipeline {
-    agent any
+    environment {
+        IMAGE_NAME = "fastapi-expense-tracker:${params.BRANCH}"
+    }
 
     stages {
         stage('Clone Repository') {
             steps {
                 echo "拉取分支: ${params.BRANCH}"
                 git branch: "${params.BRANCH}",
-                     credentialsId: '0db711c0-1648-44bd-a3c1-3d49a6a286de',
-                     url: 'git@github.com:DaDaGuang/learning.git'
+                    credentialsId: '0db711c0-1648-44bd-a3c1-3d49a6a286de',
+                    url: 'git@github.com:DaDaGuang/learning.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo "构建 Docker 镜像: fastapi-expense-tracker:${params.BRANCH}"
-                sh "docker build -t fastapi-expense-tracker:${params.BRANCH} ."
+                echo "构建 Docker 镜像: ${IMAGE_NAME}"
+                sh "docker build -t ${IMAGE_NAME} ."
             }
         }
 
         stage('Run Docker Container') {
             steps {
-                echo "运行 Docker 容器: fastapi-expense-tracker:${params.BRANCH}"
+                echo "启动容器: ${IMAGE_NAME}"
                 sh """
-                    docker stop fastapi-expense-tracker || true
-                    docker rm fastapi-expense-tracker || true
-                    docker run -d --name fastapi-expense-tracker -p 8000:8000 fastapi-expense-tracker:${params.BRANCH}
+                    docker stop expense_app || true
+                    docker rm expense_app || true
+                    docker run -d --name expense_app -p 8000:8000 ${IMAGE_NAME}
                 """
             }
         }
@@ -42,16 +42,8 @@ pipeline {
         failure {
             echo "⚠️ 构建失败，请检查日志！"
         }
-    }
-}
-
-
-    post {
-        failure {
-            echo "⚠️ 构建失败，请检查日志！"
-        }
         success {
-            echo "✅ 构建并运行成功！访问 http://your.server.ip:8000"
+            echo "✅ 构建成功，容器已启动！"
         }
     }
 }
