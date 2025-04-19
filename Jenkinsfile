@@ -14,7 +14,7 @@ pipeline {
             steps {
                 echo "拉取分支: ${params.BRANCH}"
                 git branch: "${params.BRANCH}",
-                     credentialsId: 'jenkins-github-ssh',
+                     credentialsId: '0db711c0-1648-44bd-a3c1-3d49a6a286de',
                      url: 'git@github.com:DaDaGuang/learning.git'
             }
         }
